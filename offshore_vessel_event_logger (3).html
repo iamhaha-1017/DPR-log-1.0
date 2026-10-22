@@ -744,11 +744,10 @@
         return;
       }
 
-      const headers = ['Time', 'Event'];
       const rows = logs.map((item) => [item.time, item.event]
         .map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
 
-      const csvContent = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
+      const csvContent = rows.map(r => r.join('\t')).join('\n');
 
       try {
         if (navigator.clipboard?.writeText) {

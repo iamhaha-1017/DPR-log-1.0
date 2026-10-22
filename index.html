@@ -396,9 +396,8 @@
         showToast('No logged events to export!', 'warning');
         return;
       }
-      const headers = ['Time', 'Event'];
       const rows = logs.map(item => [item.time, item.event].map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
-      const csvContent = [headers.join('\t'), ...rows.map(row => row.join('\t'))].join('\n');
+      const csvContent = rows.map(row => row.join('\t')).join('\n');
 
       try {
         if (navigator.clipboard?.writeText) {
