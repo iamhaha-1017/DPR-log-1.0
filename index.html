@@ -101,6 +101,21 @@
       return { id: item.id || Date.now() + Math.random(), time: item.time || '00:00', event: item.event || '' };
     });
 
+    function getTimeInMinutes(time) {
+      const match = String(time).match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+      return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+    }
+
+    function sortLogsByTime() {
+      logs.sort((a, b) => {
+        const aMinutes = getTimeInMinutes(a.time);
+        const bMinutes = getTimeInMinutes(b.time);
+        if (aMinutes === null) return bMinutes === null ? 0 : 1;
+        if (bMinutes === null) return -1;
+        return aMinutes - bMinutes;
+      });
+    }
+
     function showToast(message, type = 'info') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
@@ -292,18 +307,20 @@
 
     function updateInlineField(index, field, newValue) {
       if (!logs[index]) return;
+      const updatedLog = logs[index];
       const trimmed = newValue.trim();
       if (field === 'time') {
         const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
-        logs[index].time = match ? `${match[1].padStart(2, '0')}:${match[2]}` : trimmed;
+        updatedLog.time = match ? `${match[1].padStart(2, '0')}:${match[2]}` : trimmed;
       } else if (field === 'event') {
-        logs[index].event = trimmed;
+        updatedLog.event = trimmed;
       }
       saveAndRender(false);
-      showToast(`Updated Row #${index + 1} (${field.toUpperCase()})`, 'info');
+      showToast(`Updated Row #${logs.indexOf(updatedLog) + 1} (${field.toUpperCase()})`, 'info');
     }
 
     function saveAndRender(scrollToBottom = false) {
+      sortLogsByTime();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
       const tbody = document.getElementById('logTableBody');
       const count = logs.length;
