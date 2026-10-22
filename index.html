@@ -73,6 +73,7 @@
         <div class="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-slate-800/90 bg-slate-950/90 p-3.5 transition hover:border-teal-500/40 sm:flex-row sm:items-center"><div class="flex flex-1 flex-wrap items-center gap-2 font-mono text-sm sm:text-base"><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-teal-800/60 bg-teal-950 text-xs font-bold text-teal-400">09</span><label for="ctv_name" class="font-semibold text-teal-400">CTV</label><input type="text" id="ctv_name" placeholder="CTV Name" class="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono uppercase text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 sm:w-48"><span class="font-semibold text-teal-400">, Push on</span></div><button type="button" onclick="logCtvPushOn()" class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-500">Log CTV Push on</button></div>
         <div class="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-slate-800/90 bg-slate-950/90 p-3.5 transition hover:border-fuchsia-500/40 sm:flex-row sm:items-center"><div class="flex flex-1 flex-wrap items-center gap-2 font-mono text-sm sm:text-base"><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-fuchsia-800/60 bg-fuchsia-950 text-xs font-bold text-fuchsia-400">10</span><label for="team_onboard" class="font-semibold text-fuchsia-400">Team</label><input type="text" id="team_onboard" oninput="handleTeamInput(this.value, 'team_onboard')" placeholder="Team (e.g. A)" class="w-28 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono uppercase text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 sm:w-36"><span class="font-semibold text-fuchsia-400">onboard,</span><input type="number" id="team_onboard_lifts" min="0" placeholder="Lifts" aria-label="Number of lifts onboard" class="w-20 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-center font-mono text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 sm:w-24"><span class="font-semibold text-fuchsia-400">lifts</span></div><button type="button" onclick="logTeamOnboardLifts()" class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-fuchsia-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-950/50 transition hover:bg-fuchsia-500">Log Team Onboard</button></div>
         <div class="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-slate-800/90 bg-slate-950/90 p-3.5 transition hover:border-rose-500/40 sm:flex-row sm:items-center"><div class="flex flex-1 flex-wrap items-center gap-2.5 font-mono text-sm sm:text-base"><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-800/60 bg-rose-950 text-xs font-bold text-rose-400">11</span><span class="font-bold text-rose-400">CTV, Push off</span></div><button type="button" onclick="logDirectEvent('CTV, Push off')" class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-950/50 transition hover:bg-rose-500">Log CTV Push off</button></div>
+        <div class="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-slate-800/90 bg-slate-950/90 p-3.5 transition hover:border-pink-500/40 sm:flex-row sm:items-center"><div class="flex flex-1 flex-wrap items-center gap-2 font-mono text-sm sm:text-base"><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-pink-800/60 bg-pink-950 text-xs font-bold text-pink-400">12</span><label for="team_off" class="font-semibold text-pink-400">Team</label><input type="text" id="team_off" oninput="handleTeamInput(this.value, 'team_off')" placeholder="Team (e.g. A)" class="w-28 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono uppercase text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500 sm:w-36"><span class="font-semibold text-pink-400">off,</span><input type="number" id="team_off_lifts" min="0" placeholder="Lifts" aria-label="Number of lifts off" class="w-20 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-center font-mono text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500 sm:w-24"><span class="font-semibold text-pink-400">lifts</span></div><button type="button" onclick="logTeamOffLifts()" class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pink-950/50 transition hover:bg-pink-500">Log Team Off</button></div>
         <div class="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-dashed border-slate-800 bg-slate-950/50 p-3 sm:flex-row sm:items-center"><div class="flex flex-1 items-center gap-2.5"><label for="custom_remark" class="rounded border border-slate-800 bg-slate-900 px-2 py-1 font-mono text-xs uppercase text-slate-400">Custom</label><input type="text" id="custom_remark" onkeydown="if(event.key==='Enter') logCustomEvent()" placeholder="Enter custom bridge event or remark..." class="w-full rounded-lg border border-slate-700/80 bg-slate-900 px-3 py-2 font-mono text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500"></div><button type="button" onclick="logCustomEvent()" class="cursor-pointer whitespace-nowrap rounded-xl bg-slate-700 px-4 py-2 text-sm font-medium text-slate-100 transition hover:bg-slate-600">Add Custom Log</button></div>
       </div>
     </section>
@@ -171,7 +172,7 @@
 
     function handleTeamInput(value, sourceId) {
       if (!document.getElementById('syncToggle').checked) return;
-      ['team_turbine', 'team_onboard'].forEach(id => {
+      ['team_turbine', 'team_onboard', 'team_off'].forEach(id => {
         if (id !== sourceId) document.getElementById(id).value = value.toUpperCase();
       });
     }
@@ -253,6 +254,24 @@
         return;
       }
       addLogEntry(`Team ${teamVal} onboard, ${liftsVal} lifts`);
+    }
+
+    function logTeamOffLifts() {
+      const teamEl = document.getElementById('team_off');
+      const liftsEl = document.getElementById('team_off_lifts');
+      const teamVal = teamEl.value.trim().toUpperCase();
+      const liftsVal = liftsEl.value.trim();
+      if (!teamVal) {
+        showToast('Please enter the Team!', 'warning');
+        teamEl.focus();
+        return;
+      }
+      if (liftsVal === '' || Number(liftsVal) < 0) {
+        showToast('Please enter the number of lifts!', 'warning');
+        liftsEl.focus();
+        return;
+      }
+      addLogEntry(`Team ${teamVal} off, ${liftsVal} lifts`);
     }
 
     function logCustomEvent() {
