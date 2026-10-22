@@ -330,7 +330,7 @@
         </button>
         <button onclick="exportToCSV()" 
           class="sm:w-48 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-4 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-2 text-sm cursor-pointer">
-          <span>Copy CSV</span>
+          <span>Copy for Excel</span>
         </button>
       </div>
     </section>
@@ -745,12 +745,10 @@
       }
 
       const headers = ['Time', 'Event'];
-      const rows = logs.map((item) => [
-        `"${String(item.time).replace(/"/g, '""')}"`,
-        `"${String(item.event).replace(/"/g, '""')}"`
-      ]);
+      const rows = logs.map((item) => [item.time, item.event]
+        .map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
 
-      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const csvContent = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
 
       try {
         if (navigator.clipboard?.writeText) {
