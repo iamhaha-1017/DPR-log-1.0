@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offshore Vessel Event Logger | Bridge & DPO Log</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- SheetJS for genuine .xlsx Excel Export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Clean number inputs for bridge touchscreens & keyboards */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    /* High-contrast custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155; 
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569; 
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-3 sm:p-6 font-sans selection:bg-sky-500 selection:text-white">
+
+  <!-- Toast Notification Container (Replaces native alert) -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Main Application Wrapper -->
+  <div class="max-w-5xl mx-auto space-y-5">
+
+    <!-- 1. Top Bridge Header & Time Controls (Strictly HH:mm, No Date) -->
+    <header class="bg-slate-900/95 backdrop-blur border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-2xl shadow-inner shrink-0">
+          ⚓
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold text-white tracking-tight">Offshore Vessel Event Logger</h1>
+            <span class="text-xs font-mono uppercase px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-400 border border-sky-800/60 font-semibold">Bridge / DPO</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 mt-1">
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <p id="liveClock" class="text-sm sm:text-base text-emerald-400 font-mono font-bold tracking-wider">00:00 LT</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls Bar: Manual Time Override, Auto-Sync Toggle & Timezone -->
+      <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
+        
+        <!-- Optional Manual Time Override (HH:mm) -->
+        <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800" title="Leave empty to log current live time, or enter HH:mm to log a specific time">
+          <label for="manualTimeInput" class="text-xs text-slate-400 whitespace-nowrap">Custom Time:</label>
+          <input type="text" id="manualTimeInput" placeholder="Live (HH:mm)" maxlength="5"
+            class="w-24 bg-slate-900 text-xs sm:text-sm text-amber-300 font-mono font-semibold px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-500 text-center placeholder-slate-500">
+          <button onclick="clearManualTime()" id="clearManualTimeBtn" class="hidden text-xs text-slate-400 hover:text-white px-1 cursor-pointer" title="Reset to Live Clock">Clear</button>
+        </div>
+
+        <!-- Smart Auto-Sync Toggle -->
+        <label class="flex items-center gap-2 cursor-pointer bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 hover:border-slate-700 transition select-none">
+          <input type="checkbox" id="syncToggle" checked class="w-4 h-4 accent-sky-500 rounded cursor-pointer">
+          <span class="text-xs text-slate-300 font-medium">Auto-Sync WTG & Team</span>
+        </label>
+
+        <!-- Timezone Selector (LT vs UTC) -->
+        <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+          <span class="text-xs text-slate-400">Mode:</span>
+          <select id="tzSelect" onchange="updateClock()" class="bg-slate-900 text-xs sm:text-sm text-sky-300 font-mono font-semibold px-2.5 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-sky-500 cursor-pointer">
+            <option value="LOCAL">Local Time (LT)</option>
+            <option value="UTC">UTC Time</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Event Logging Panel (All 11 Standard Offshore Events + Custom Event) -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pb-2 border-b border-slate-800">
+        <h2 class="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          Quick Event Logging Panel
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3">
+        
+        <!-- Event 1: Green Light from MCC to ____ -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-emerald-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2.5 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-800/60 text-xs flex items-center justify-center font-bold shrink-0">01</span>
+            <span class="text-emerald-400 font-semibold">Green Light from MCC to</span>
+            <input type="text" id="wtg_mcc" oninput="handleWtgInput(this.value, 'wtg_mcc')" placeholder="WTG (e.g. A01)" 
+              class="w-40 sm:w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase">
+          </div>
+          <button onclick="logWtgEvent('Green Light from MCC to ', 'wtg_mcc')" 
+            class="bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Green Light</span>
+          </button>
+        </div>
+
+        <!-- Event 2: Vessel transit to ____ -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-sky-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2.5 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-sky-950 text-sky-400 border border-sky-800/60 text-xs flex items-center justify-center font-bold shrink-0">02</span>
+            <span class="text-sky-300 font-semibold">Vessel transit to</span>
+            <input type="text" id="wtg_transit" oninput="handleWtgInput(this.value, 'wtg_transit')" placeholder="WTG (e.g. A01)" 
+              class="w-40 sm:w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 uppercase">
+          </div>
+          <button onclick="logWtgEvent('Vessel transit to ', 'wtg_transit')" 
+            class="bg-sky-600 hover:bg-sky-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-sky-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Transit</span>
+          </button>
+        </div>
+
+        <!-- Event 3: Vessel Enter SZ of ____ -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-blue-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2.5 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-blue-950 text-blue-400 border border-blue-800/60 text-xs flex items-center justify-center font-bold shrink-0">03</span>
+            <span class="text-blue-400 font-semibold">Vessel Enter SZ of</span>
+            <input type="text" id="wtg_enter" oninput="handleWtgInput(this.value, 'wtg_enter')" placeholder="WTG (e.g. A01)" 
+              class="w-40 sm:w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
+          </div>
+          <button onclick="logWtgEvent('Vessel Enter SZ of ', 'wtg_enter')" 
+            class="bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-blue-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Enter SZ</span>
+          </button>
+        </div>
+
+        <!-- Event 4: Gangway connect -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-indigo-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2.5 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-indigo-950 text-indigo-400 border border-indigo-800/60 text-xs flex items-center justify-center font-bold shrink-0">04</span>
+            <span class="text-indigo-400 font-bold">Gangway connect</span>
+          </div>
+          <button onclick="logDirectEvent('Gangway connect')" 
+            class="bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Gangway connect</span>
+          </button>
+        </div>
+
+        <!-- Event 5: Team ___ , ___ pax on turbine -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-purple-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-purple-950 text-purple-400 border border-purple-800/60 text-xs flex items-center justify-center font-bold shrink-0">05</span>
+            <span class="text-purple-400 font-semibold">Team</span>
+            <input type="text" id="team_turbine" oninput="handleTeamInput(this.value, 'team_turbine')" placeholder="Team (e.g. A)" 
+              class="w-28 sm:w-36 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 uppercase">
+            <span class="text-purple-400 font-bold">,</span>
+            <input type="number" id="pax_turbine" min="1" placeholder="Pax" 
+              class="w-20 sm:w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 text-center">
+            <span class="text-purple-400 font-semibold">pax on turbine</span>
+          </div>
+          <button onclick="logTeamPaxOnTurbine()" 
+            class="bg-purple-600 hover:bg-purple-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-purple-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Team Pax</span>
+          </button>
+        </div>
+
+        <!-- Event 6: Lifting Operation , ___ Lifts -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-cyan-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-cyan-950 text-cyan-400 border border-cyan-800/60 text-xs flex items-center justify-center font-bold shrink-0">06</span>
+            <span class="text-cyan-400 font-semibold">Lifting Operation ,</span>
+            <input type="number" id="lifting_op_count" min="1" placeholder="No." 
+              class="w-24 sm:w-28 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-center">
+            <span class="text-cyan-400 font-semibold">Lifts</span>
+          </div>
+          <button onclick="logLiftingOperation()" 
+            class="bg-cyan-600 hover:bg-cyan-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-cyan-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Lifting</span>
+          </button>
+        </div>
+
+        <!-- Event 7: Gangway Disconnect -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-amber-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2.5 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-amber-950 text-amber-400 border border-amber-800/60 text-xs flex items-center justify-center font-bold shrink-0">07</span>
+            <span class="text-amber-400 font-bold">Gangway Disconnect</span>
+          </div>
+          <button onclick="logDirectEvent('Gangway Disconnect')" 
+            class="bg-amber-600 hover:bg-amber-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-amber-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Gangway Disconnect</span>
+          </button>
+        </div>
+
+        <!-- Event 8: Vessel Exit SZ of ____ -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-orange-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2.5 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-orange-950 text-orange-400 border border-orange-800/60 text-xs flex items-center justify-center font-bold shrink-0">08</span>
+            <span class="text-orange-400 font-semibold">Vessel Exit SZ of</span>
+            <input type="text" id="wtg_exit" oninput="handleWtgInput(this.value, 'wtg_exit')" placeholder="WTG (e.g. A01)" 
+              class="w-40 sm:w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 uppercase">
+          </div>
+          <button onclick="logWtgEvent('Vessel Exit SZ of ', 'wtg_exit')" 
+            class="bg-orange-600 hover:bg-orange-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-orange-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Exit SZ</span>
+          </button>
+        </div>
+
+        <!-- Event 9: CTV ____, Push on -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-teal-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-teal-950 text-teal-400 border border-teal-800/60 text-xs flex items-center justify-center font-bold shrink-0">09</span>
+            <span class="text-teal-400 font-semibold">CTV</span>
+            <input type="text" id="ctv_name" placeholder="CTV Name" 
+              class="w-40 sm:w-48 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500 uppercase">
+            <span class="text-teal-400 font-semibold">, Push on</span>
+          </div>
+          <button onclick="logCtvPushOn()" 
+            class="bg-teal-600 hover:bg-teal-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-teal-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log CTV Push on</span>
+          </button>
+        </div>
+
+        <!-- Event 10: Team ___ onboard, ____ lifts -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-fuchsia-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-fuchsia-950 text-fuchsia-400 border border-fuchsia-800/60 text-xs flex items-center justify-center font-bold shrink-0">10</span>
+            <span class="text-fuchsia-400 font-semibold">Team</span>
+            <input type="text" id="team_onboard" oninput="handleTeamInput(this.value, 'team_onboard')" placeholder="Team (e.g. A)" 
+              class="w-28 sm:w-36 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 uppercase">
+            <span class="text-fuchsia-400 font-semibold">onboard,</span>
+            <input type="number" id="team_onboard_lifts" min="0" placeholder="Lifts" 
+              class="w-20 sm:w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 text-center">
+            <span class="text-fuchsia-400 font-semibold">lifts</span>
+          </div>
+          <button onclick="logTeamOnboardLifts()" 
+            class="bg-fuchsia-600 hover:bg-fuchsia-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-fuchsia-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log Team Onboard</span>
+          </button>
+        </div>
+
+        <!-- Event 11: CTV, Push off -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 hover:border-rose-500/40 transition">
+          <div class="flex items-center flex-wrap gap-2.5 font-mono text-sm sm:text-base flex-1">
+            <span class="w-6 h-6 rounded-md bg-rose-950 text-rose-400 border border-rose-800/60 text-xs flex items-center justify-center font-bold shrink-0">11</span>
+            <span class="text-rose-400 font-bold">CTV, Push off</span>
+          </div>
+          <button onclick="logDirectEvent('CTV, Push off')" 
+            class="bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-rose-950/50 flex items-center justify-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+            <span>Log CTV Push off</span>
+          </button>
+        </div>
+
+        <!-- Bonus Custom Event Row -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-950/50 p-3 rounded-xl border border-dashed border-slate-800">
+          <div class="flex items-center gap-2.5 flex-1">
+            <span class="text-xs font-mono text-slate-400 uppercase px-2 py-1 bg-slate-900 rounded border border-slate-800">Custom</span>
+            <input type="text" id="custom_remark" onkeydown="if(event.key==='Enter') logCustomEvent()" placeholder="Enter custom bridge event or remark (Press Enter to log)..." 
+              class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500 font-mono">
+          </div>
+          <button onclick="logCustomEvent()" 
+            class="bg-slate-700 hover:bg-slate-600 text-slate-100 font-medium px-4 py-2 rounded-xl transition text-sm whitespace-nowrap cursor-pointer">
+            Add Custom Log
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. Streamlined 2-Column Recorded Log Table & Export Section -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+      <div class="flex flex-wrap justify-between items-center gap-2">
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-xs sm:text-sm font-bold text-slate-200 uppercase tracking-wider">Recorded Event Log (2-Column Export Format)</h2>
+          <span id="logCountBadge" class="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">0 Entries</span>
+          <span class="text-xs text-slate-400 hidden sm:inline">• Click any Time or Event cell to edit inline</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openClearModal()" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-950/70 border border-rose-800/50 px-3 py-1.5 rounded-lg transition cursor-pointer font-medium">
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Wrapper (Strictly Time & Event + Action) -->
+      <div class="overflow-x-auto max-h-[440px] overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/60">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-900/95 text-slate-400 text-xs uppercase sticky top-0 z-10 border-b border-slate-800 backdrop-blur">
+            <tr>
+              <th class="py-3 px-4 w-32">Time</th>
+              <th class="py-3 px-4">Event</th>
+              <th class="py-3 px-4 w-24 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody" class="divide-y divide-slate-800/70 text-xs sm:text-sm font-mono">
+            <!-- Dynamically rendered via JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Prominent Bottom Export Buttons (Exports strictly Time & Event) -->
+      <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
+        <button onclick="exportToExcel()" 
+          class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-emerald-950/60 transition flex items-center justify-center gap-3 text-base sm:text-lg cursor-pointer">
+          <span>Export to Excel (.xlsx)</span>
+        </button>
+        <button onclick="exportToCSV()" 
+          class="sm:w-48 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-4 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-2 text-sm cursor-pointer">
+          <span>Export CSV</span>
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Clear All Confirmation Modal -->
+  <div id="clearModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+      <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">Clear All Logged Events?</h3>
+      <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">This will permanently remove all recorded events from the current table. Make sure you have exported your Excel file first.</p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeClearModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm cursor-pointer">Cancel</button>
+        <button onclick="confirmClearAll()" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm cursor-pointer">Confirm Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // LocalStorage key for persisting bridge logs
+    const STORAGE_KEY = 'offshore_vessel_event_logs_en_v2';
+    let logs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+    // Normalize any legacy timestamps in localStorage to strict HH:mm format
+    logs = logs.map(item => {
+      if (item && typeof item.time === 'string') {
+        const match = item.time.trim().match(/^(\d{1,2}):(\d{2})/);
+        if (match) {
+          item.time = `${match[1].padStart(2, '0')}:${match[2]}`;
+        }
+      }
+      return {
+        id: item.id || Date.now() + Math.random(),
+        time: item.time || '00:00',
+        event: item.event || ''
+      };
+    });
+
+    // Toast notification helper (No native alert/confirm)
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colorMap = {
+        success: 'bg-emerald-950/95 border-emerald-500/60 text-emerald-200',
+        warning: 'bg-amber-950/95 border-amber-500/60 text-amber-200',
+        error: 'bg-rose-950/95 border-rose-500/60 text-rose-200',
+        info: 'bg-sky-950/95 border-sky-500/60 text-sky-200'
+      };
+      toast.className = `px-4 py-3 rounded-xl border shadow-xl backdrop-blur text-xs sm:text-sm font-medium transition-all duration-300 pointer-events-auto flex items-center justify-between gap-2 ${colorMap[type] || colorMap.info}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 2400);
+    }
+
+    // Format Date object strictly to HH:mm (no seconds, no dates)
+    function getFormattedTimeHHMM(dateObj, mode) {
+      const pad = (n) => String(n).padStart(2, '0');
+      if (mode === 'UTC') {
+        return `${pad(dateObj.getUTCHours())}:${pad(dateObj.getUTCMinutes())}`;
+      } else {
+        return `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+      }
+    }
+
+    // Live Bridge Clock (HH:mm LT / UTC)
+    function updateClock() {
+      const mode = document.getElementById('tzSelect').value;
+      const timeStr = getFormattedTimeHHMM(new Date(), mode);
+      const suffix = mode === 'UTC' ? 'UTC' : 'LT';
+      document.getElementById('liveClock').textContent = `${timeStr} ${suffix}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Monitor manual time input to toggle clear button
+    const manualTimeInput = document.getElementById('manualTimeInput');
+    const clearManualTimeBtn = document.getElementById('clearManualTimeBtn');
+    manualTimeInput.addEventListener('input', function () {
+      if (this.value.trim().length > 0) {
+        clearManualTimeBtn.classList.remove('hidden');
+      } else {
+        clearManualTimeBtn.classList.add('hidden');
+      }
+    });
+
+    function clearManualTime() {
+      manualTimeInput.value = '';
+      clearManualTimeBtn.classList.add('hidden');
+      showToast('Switched back to Live Clock (HH:mm)', 'info');
+    }
+
+    // Resolve timestamp for logging (either valid manual override HH:mm or live clock HH:mm)
+    function resolveLogTime() {
+      const manualVal = manualTimeInput.value.trim();
+      if (manualVal) {
+        const match = manualVal.match(/^(\d{1,2}):(\d{2})$/);
+        if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) {
+          showToast('Invalid Custom Time! Use HH:mm (e.g. 08:30 or 14:45).', 'warning');
+          manualTimeInput.focus();
+          return null;
+        }
+        return `${match[1].padStart(2, '0')}:${match[2]}`;
+      }
+      const mode = document.getElementById('tzSelect').value;
+      return getFormattedTimeHHMM(new Date(), mode);
+    }
+
+    // Smart Auto-Sync for all 4 WTG inputs
+    function handleWtgInput(value, sourceId) {
+      const cleanVal = value.toUpperCase();
+      if (!document.getElementById('syncToggle').checked) return;
+
+      const wtgIds = ['wtg_mcc', 'wtg_transit', 'wtg_enter', 'wtg_exit'];
+      wtgIds.forEach(id => {
+        if (id !== sourceId) {
+          document.getElementById(id).value = cleanVal;
+        }
+      });
+    }
+
+    // Smart Auto-Sync for both Team inputs (Event 5 & Event 10)
+    function handleTeamInput(value, sourceId) {
+      const cleanVal = value.toUpperCase();
+      if (!document.getElementById('syncToggle').checked) return;
+
+      const teamIds = ['team_turbine', 'team_onboard'];
+      teamIds.forEach(id => {
+        if (id !== sourceId) {
+          document.getElementById(id).value = cleanVal;
+        }
+      });
+    }
+
+    // Core function to append a new log entry (Strictly Time & Event)
+    function addLogEntry(eventText) {
+      const timeStr = resolveLogTime();
+      if (!timeStr) return;
+
+      logs.push({
+        id: Date.now() + Math.random(),
+        time: timeStr,
+        event: eventText
+      });
+
+      saveAndRender(true);
+      showToast(`Logged [${timeStr}]: ${eventText}`, 'success');
+    }
+
+    // Events 1, 2, 3, 8: WTG-based Events
+    function logWtgEvent(prefixText, inputId) {
+      const inputEl = document.getElementById(inputId);
+      const wtgVal = inputEl.value.trim().toUpperCase();
+      if (!wtgVal) {
+        showToast('Please enter a WTG first (e.g. A01)!', 'warning');
+        inputEl.focus();
+        return;
+      }
+      addLogEntry(`${prefixText}${wtgVal}`);
+    }
+
+    // Events 4, 7, 11: One-click Direct Events
+    function logDirectEvent(eventText) {
+      addLogEntry(eventText);
+    }
+
+    // Event 5: Team ___ , ___ pax on turbine
+    function logTeamPaxOnTurbine() {
+      const teamEl = document.getElementById('team_turbine');
+      const paxEl = document.getElementById('pax_turbine');
+      const teamVal = teamEl.value.trim().toUpperCase();
+      const paxVal = paxEl.value.trim();
+
+      if (!teamVal) {
+        showToast('Please enter the Team (e.g. A or 1)!', 'warning');
+        teamEl.focus();
+        return;
+      }
+      if (!paxVal || Number(paxVal) <= 0) {
+        showToast('Please enter a valid Pax count!', 'warning');
+        paxEl.focus();
+        return;
+      }
+
+      addLogEntry(`Team ${teamVal} , ${paxVal} pax on turbine`);
+    }
+
+    // Event 6: Lifting Operation , ___ Lifts
+    function logLiftingOperation() {
+      const liftsEl = document.getElementById('lifting_op_count');
+      const liftsVal = liftsEl.value.trim();
+
+      if (!liftsVal || Number(liftsVal) <= 0) {
+        showToast('Please enter the number of Lifts!', 'warning');
+        liftsEl.focus();
+        return;
+      }
+
+      addLogEntry(`Lifting Operation , ${liftsVal} Lifts`);
+    }
+
+    // Event 9: CTV ____, Push on
+    function logCtvPushOn() {
+      const ctvEl = document.getElementById('ctv_name');
+      const ctvVal = ctvEl.value.trim().toUpperCase();
+
+      if (!ctvVal) {
+        showToast('Please enter the CTV Name!', 'warning');
+        ctvEl.focus();
+        return;
+      }
+
+      addLogEntry(`CTV ${ctvVal}, Push on`);
+    }
+
+    // Event 10: Team ___ onboard, ____ lifts
+    function logTeamOnboardLifts() {
+      const teamEl = document.getElementById('team_onboard');
+      const liftsEl = document.getElementById('team_onboard_lifts');
+      const teamVal = teamEl.value.trim().toUpperCase();
+      const liftsVal = liftsEl.value.trim();
+
+      if (!teamVal) {
+        showToast('Please enter the Team!', 'warning');
+        teamEl.focus();
+        return;
+      }
+      if (liftsVal === '' || Number(liftsVal) < 0) {
+        showToast('Please enter the number of lifts!', 'warning');
+        liftsEl.focus();
+        return;
+      }
+
+      addLogEntry(`Team ${teamVal} onboard, ${liftsVal} lifts`);
+    }
+
+    // Bonus Custom Event Row
+    function logCustomEvent() {
+      const inputEl = document.getElementById('custom_remark');
+      const val = inputEl.value.trim();
+      if (!val) {
+        showToast('Please enter a custom event description!', 'warning');
+        inputEl.focus();
+        return;
+      }
+      addLogEntry(val);
+      inputEl.value = '';
+    }
+
+    // Safe HTML attribute escaping
+    function escapeAttr(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    // Inline table cell update handler
+    function updateInlineField(index, field, newValue) {
+      if (!logs[index]) return;
+      const trimmed = newValue.trim();
+
+      if (field === 'time') {
+        const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+        logs[index].time = match ? `${match[1].padStart(2, '0')}:${match[2]}` : trimmed;
+      } else if (field === 'event') {
+        logs[index].event = trimmed;
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+      saveAndRender(false);
+      showToast(`Updated Row #${index + 1} (${field.toUpperCase()})`, 'info');
+    }
+
+    // Save state and render the 2-column log table
+    function saveAndRender(scrollToBottom = false) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+      const tbody = document.getElementById('logTableBody');
+      const count = logs.length;
+      document.getElementById('logCountBadge').textContent = `${count} ${count === 1 ? 'Entry' : 'Entries'}`;
+
+      if (count === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="3" class="py-10 text-center text-slate-500 font-sans">
+              No events logged yet. Click any event button above to record an HH:mm timestamp.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = logs.map((item, idx) => `
+        <tr class="hover:bg-slate-900/90 transition group">
+          <td class="py-2 px-3 w-32">
+            <input type="text" value="${escapeAttr(item.time)}" 
+              placeholder="HH:mm"
+              onchange="updateInlineField(${idx}, 'time', this.value)"
+              aria-label="Edit Time (HH:mm) for row ${idx + 1}"
+              class="w-24 bg-transparent hover:bg-slate-900 focus:bg-slate-950 text-sky-400 font-semibold px-2 py-1 rounded border border-transparent hover:border-slate-700 focus:border-sky-500 focus:outline-none transition font-mono">
+          </td>
+          <td class="py-2 px-3">
+            <input type="text" value="${escapeAttr(item.event)}" 
+              onchange="updateInlineField(${idx}, 'event', this.value)"
+              aria-label="Edit Event for row ${idx + 1}"
+              class="w-full min-w-[240px] bg-transparent hover:bg-slate-900 focus:bg-slate-950 text-white font-semibold px-2 py-1 rounded border border-transparent hover:border-slate-700 focus:border-sky-500 focus:outline-none transition font-mono">
+          </td>
+          <td class="py-2 px-4 text-center whitespace-nowrap w-24">
+            <button onclick="deleteSingleLog(${idx})" class="text-rose-400 hover:text-rose-300 bg-rose-950/50 hover:bg-rose-900/60 border border-rose-800/50 px-2.5 py-1 rounded-md text-xs cursor-pointer transition">
+              Delete
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      if (scrollToBottom) {
+        const tableWrapper = tbody.parentElement.parentElement;
+        tableWrapper.scrollTop = tableWrapper.scrollHeight;
+      }
+    }
+
+    // Delete single log row
+    function deleteSingleLog(index) {
+      const removed = logs.splice(index, 1);
+      saveAndRender(false);
+      showToast(`Deleted: ${removed[0].event}`, 'info');
+    }
+
+    // Clear All Modal Handlers
+    function openClearModal() {
+      if (logs.length === 0) {
+        showToast('Log table is already empty.', 'info');
+        return;
+      }
+      const modal = document.getElementById('clearModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeClearModal() {
+      const modal = document.getElementById('clearModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmClearAll() {
+      logs = [];
+      saveAndRender(false);
+      closeClearModal();
+      showToast('All logged events have been cleared.', 'info');
+    }
+
+    // Export strictly 2 columns (Time and Event) to real .xlsx Excel file
+    function exportToExcel() {
+      if (logs.length === 0) {
+        showToast('⚠️ No logged events to export! Please log an event first.', 'warning');
+        return;
+      }
+
+      try {
+        const exportData = logs.map((item) => ({
+          'Time': item.time,
+          'Event': item.event
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        worksheet['!cols'] = [
+          { wch: 12 }, // Time (HH:mm)
+          { wch: 48 }  // Event
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Event Log');
+
+        const fileName = 'Vessel_Event_Log.xlsx';
+        XLSX.writeFile(workbook, fileName);
+        showToast(`✅ Exported Excel file: ${fileName}`, 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Excel export failed, falling back to CSV export...', 'error');
+        exportToCSV();
+      }
+    }
+
+    // Export strictly 2 columns (Time and Event) to CSV file
+    function exportToCSV() {
+      if (logs.length === 0) {
+        showToast('⚠️ No logged events to export!', 'warning');
+        return;
+      }
+
+      const headers = ['Time', 'Event'];
+      const rows = logs.map((item) => [
+        `"${String(item.time).replace(/"/g, '""')}"`,
+        `"${String(item.event).replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Vessel_Event_Log.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showToast('✅ Exported CSV file: Vessel_Event_Log.csv', 'success');
+    }
+
+    // Initialize table on load
+    window.onload = function () {
+      saveAndRender(false);
+    };
+  </script>
+</body>
+</html>
