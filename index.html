@@ -531,15 +531,15 @@
         showToast('No logged events to export!', 'warning');
         return;
       }
-      const columnPositions = [0, 2, 4, 7, 9, 11, 14, 16, 18];
-      const columnSpans = [2, 2, 3, 2, 2, 3, 2, 2, 3];
+      const columnPositions = [0, 2, 4, 7, 9, 11, 13, 15, 17];
+      const columnSpans = [2, 2, 3, 2, 2, 2, 2, 2, 4];
       const rows = logs.map(item => [
         item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts,
         formatTimeForDisplay(item.start), formatTimeForDisplay(item.end),
         item.team === '' ? '' : `Team ${item.team}`
       ]).map(row => row.map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
       const plainText = rows.map(row => {
-        const alignedRow = Array(19).fill('');
+        const alignedRow = Array(21).fill('');
         row.forEach((value, index) => {
           alignedRow[columnPositions[index]] = value;
         });
