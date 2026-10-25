@@ -424,16 +424,35 @@
 
     function updateInlineField(index, field, newValue) {
       if (!logs[index]) return;
-      const updatedLog = logs[index];
       const trimmed = newValue.trim();
-      if (field === 'time') {
-        const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
-        updatedLog.time = match ? `${match[1].padStart(2, '0')}:${match[2]}` : trimmed;
-      } else if (field === 'event') {
-        updatedLog.event = trimmed;
+      const editableFields = ['location', 'categories', 'activity', 'paxOn', 'paxOff', 'lifts', 'start', 'end', 'team'];
+      if (!editableFields.includes(field)) return;
+
+      if (['paxOn', 'paxOff', 'lifts', 'team'].includes(field)) {
+        const numberValue = trimmed === '' ? '' : Number(trimmed);
+        if (numberValue !== '' && (!Number.isFinite(numberValue) || numberValue < 0)) {
+          showToast('Enter a valid non-negative number.', 'warning');
+          saveAndRender(false);
+          return;
+        }
+        logs[index][field] = numberValue;
+      } else if (field === 'start' || field === 'end') {
+        const validTime = /^(?:(?:0?[1-9]|1[0-2]):[0-5]\d(?::[0-5]\d)?\s*(?:AM|PM)|(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?|24:00(?::00)?)$/i;
+        if (trimmed && !validTime.test(trimmed)) {
+          showToast('Enter a valid time, such as 13:30:00 or 1:30:00 PM.', 'warning');
+          saveAndRender(false);
+          return;
+        }
+        logs[index][field] = trimmed ? formatActivityTime(trimmed) : '';
+      } else {
+        logs[index][field] = trimmed;
       }
       saveAndRender(false);
-      showToast(`Updated Row #${logs.indexOf(updatedLog) + 1} (${field.toUpperCase()})`, 'info');
+      showToast(`Updated row #${index + 1}.`, 'success');
+    }
+
+    function renderEditableCell(index, field, value, type = 'text') {
+      return `<td class="px-2 py-1"><input type="${type}" min="${type === 'number' ? '0' : ''}" step="${type === 'number' ? '1' : ''}" value="${escapeAttr(value)}" aria-label="Edit ${field}" onchange="updateInlineField(${index}, '${field}', this.value)" class="w-full min-w-12 rounded border border-transparent bg-transparent px-2 py-1 text-inherit focus:border-sky-500 focus:bg-slate-900 focus:outline-none"></td>`;
     }
 
     function saveAndRender(scrollToBottom = false) {
@@ -447,15 +466,15 @@
       }
       tbody.innerHTML = logs.map((item, idx) => `
         <tr class="transition hover:bg-slate-900/90">
-          <td class="px-4 py-2">${escapeAttr(item.location)}</td>
-          <td class="px-4 py-2">${escapeAttr(item.categories)}</td>
-          <td class="px-4 py-2">${escapeAttr(item.activity)}</td>
-          <td class="px-4 py-2">${escapeAttr(item.paxOn)}</td>
-          <td class="px-4 py-2">${escapeAttr(item.paxOff)}</td>
-          <td class="px-4 py-2">${escapeAttr(item.lifts)}</td>
-          <td class="px-4 py-2 font-mono">${escapeAttr(formatTimeForDisplay(item.start))}</td>
-          <td class="px-4 py-2 font-mono">${escapeAttr(formatTimeForDisplay(item.end))}</td>
-          <td class="px-4 py-2">${item.team === '' ? '' : escapeAttr(`Team ${item.team}`)}</td>
+          ${renderEditableCell(idx, 'location', item.location)}
+          ${renderEditableCell(idx, 'categories', item.categories)}
+          ${renderEditableCell(idx, 'activity', item.activity)}
+          ${renderEditableCell(idx, 'paxOn', item.paxOn, 'number')}
+          ${renderEditableCell(idx, 'paxOff', item.paxOff, 'number')}
+          ${renderEditableCell(idx, 'lifts', item.lifts, 'number')}
+          ${renderEditableCell(idx, 'start', formatTimeForDisplay(item.start))}
+          ${renderEditableCell(idx, 'end', formatTimeForDisplay(item.end))}
+          ${renderEditableCell(idx, 'team', item.team, 'number')}
           <td class="whitespace-nowrap px-4 py-2 text-center"><button type="button" onclick="deleteSingleLog(${idx})" class="cursor-pointer rounded-md border border-rose-800/50 bg-rose-950/50 px-2.5 py-1 text-xs text-rose-400 transition hover:bg-rose-900/60 hover:text-rose-300">Delete</button></td>
         </tr>`).join('');
       if (scrollToBottom) {
@@ -491,7 +510,7 @@
     function confirmClearAll() {
       logs = [];
       saveAndRender(false);
-      setStartToPreviousEnd();
+      startInput.value = '00:00:00';
       closeClearModal();
       showToast('All logged activities have been cleared.', 'info');
     }
