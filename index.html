@@ -496,6 +496,28 @@
       showToast('All logged activities have been cleared.', 'info');
     }
 
+    const excelColumnPositions = [0, 2, 4, 7, 9, 11, 14, 16, 18];
+    const excelColumnSpans = [2, 2, 3, 2, 2, 3, 2, 2, 4];
+    const excelColumnCount = 22;
+
+    function getExportRows() {
+      return logs.map(item => [
+        item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts,
+        formatTimeForDisplay(item.start), formatTimeForDisplay(item.end),
+        item.team === '' ? '' : `Team ${item.team}`
+      ]);
+    }
+
+    function alignExportRows(rows) {
+      return rows.map(row => {
+        const alignedRow = Array(excelColumnCount).fill('');
+        row.forEach((value, index) => {
+          alignedRow[excelColumnPositions[index]] = value;
+        });
+        return alignedRow;
+      });
+    }
+
     function exportToExcel() {
       if (logs.length === 0) {
         showToast('No logged events to export! Please log an event first.', 'warning');
@@ -503,18 +525,14 @@
       }
       try {
         if (!window.XLSX) throw new Error('Excel export library is unavailable');
-        const worksheet = XLSX.utils.json_to_sheet(logs.map(({ location, categories, activity, paxOn, paxOff, lifts, start, end, team }) => ({
-          Location: location,
-          Categories: categories,
-          Activities: activity,
-          'Pax on': paxOn,
-          'Pax off': paxOff,
-          Lifts: lifts,
-          Start: formatTimeForDisplay(start),
-          End: formatTimeForDisplay(end),
-          'Comments & Remarks': team === '' ? '' : `Team ${team}`
-        })));
-        worksheet['!cols'] = [{ wch: 22 }, { wch: 22 }, { wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 22 }];
+        const rows = getExportRows();
+        const worksheet = XLSX.utils.aoa_to_sheet(alignExportRows(rows));
+        worksheet['!merges'] = rows.flatMap((_, rowIndex) =>
+          excelColumnSpans.map((span, index) => ({
+            s: { r: rowIndex, c: excelColumnPositions[index] },
+            e: { r: rowIndex, c: excelColumnPositions[index] + span - 1 }
+          }))
+        );
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Activity Log');
         XLSX.writeFile(workbook, 'Vessel_Activity_Log.xlsx');
@@ -531,22 +549,12 @@
         showToast('No logged events to export!', 'warning');
         return;
       }
-      const columnPositions = [0, 2, 4, 7, 9, 11, 14, 16, 18];
-      const columnSpans = [2, 2, 3, 2, 2, 3, 2, 2, 4];
-      const rows = logs.map(item => [
-        item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts,
-        formatTimeForDisplay(item.start), formatTimeForDisplay(item.end),
-        item.team === '' ? '' : `Team ${item.team}`
-      ]).map(row => row.map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
-      const plainText = rows.map(row => {
-        const alignedRow = Array(22).fill('');
-        row.forEach((value, index) => {
-          alignedRow[columnPositions[index]] = value;
-        });
-        return alignedRow.join('\t');
-      }).join('\n');
+      const rows = getExportRows().map(row =>
+        row.map(value => String(value).replace(/[\t\r\n]+/g, ' '))
+      );
+      const plainText = alignExportRows(rows).map(row => row.join('\t')).join('\n');
       const htmlTable = `<table><tbody>${rows.map(row =>
-        `<tr>${row.map((value, index) => `<td colspan="${columnSpans[index]}">${escapeAttr(value)}</td>`).join('')}</tr>`
+        `<tr>${row.map((value, index) => `<td colspan="${excelColumnSpans[index]}">${escapeAttr(value)}</td>`).join('')}</tr>`
       ).join('')}</tbody></table>`;
 
       try {
