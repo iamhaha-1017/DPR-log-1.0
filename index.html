@@ -41,15 +41,6 @@
         </div>
       </div>
       <div class="flex w-full flex-wrap items-center justify-between gap-2.5 border-t border-slate-800 pt-3 lg:w-auto lg:justify-end lg:border-t-0 lg:pt-0">
-        <div class="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5" title="Leave empty to log current live time, or enter HH:mm to log a specific time">
-          <label for="manualTimeInput" class="whitespace-nowrap text-xs text-slate-400">Custom Time:</label>
-          <input type="text" id="manualTimeInput" placeholder="Live (HH:mm)" maxlength="5" class="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-center font-mono text-xs font-semibold text-amber-300 placeholder-slate-500 focus:border-amber-500 focus:outline-none sm:text-sm">
-          <button type="button" onclick="clearManualTime()" id="clearManualTimeBtn" class="hidden cursor-pointer px-1 text-xs text-slate-400 hover:text-white" title="Reset to Live Clock">Clear</button>
-        </div>
-        <label class="flex cursor-pointer select-none items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 transition hover:border-slate-700">
-          <input type="checkbox" id="syncToggle" checked class="h-4 w-4 cursor-pointer accent-sky-500">
-          <span class="text-xs font-medium text-slate-300">Auto-Sync WTG &amp; Team</span>
-        </label>
         <div class="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5">
           <label for="tzSelect" class="text-xs text-slate-400">Mode:</label>
           <select id="tzSelect" onchange="updateClock()" class="cursor-pointer rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 font-mono text-xs font-semibold text-sky-300 focus:border-sky-500 focus:outline-none sm:text-sm">
@@ -59,7 +50,22 @@
       </div>
     </header>
 
-    <section class="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6" aria-labelledby="quickLogHeading">
+    <section class="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6" aria-labelledby="entryFormHeading">
+      <div class="border-b border-slate-800 pb-2"><h2 id="entryFormHeading" class="text-xs font-bold uppercase tracking-wider text-slate-200 sm:text-sm">Add Activity</h2></div>
+      <form id="activityForm" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="space-y-1.5"><label for="locationInput" class="text-xs font-semibold text-slate-300">Location</label><input id="locationInput" name="location" type="text" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="Enter location"></div>
+        <div class="space-y-1.5"><label for="categoriesInput" class="text-xs font-semibold text-slate-300">Categories</label><input id="categoriesInput" name="categories" type="text" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="Enter category"></div>
+        <div class="space-y-1.5 sm:col-span-2"><label for="activityInput" class="text-xs font-semibold text-slate-300">Activities</label><select id="activityInput" name="activity" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"><option value="">Select an operation</option><option>Connected W2W</option><option>Crane ops.</option><option>CTV Transfer</option><option>Drills onboard</option><option>in postion crane</option><option>in postion W2W</option><option>Maintenance - Planned</option><option>Other</option><option>Safety Zone W2W</option><option>Standby outside S/Z</option><option>Transit from port</option><option>Transit in flied</option><option>Transit to port</option></select></div>
+        <div class="space-y-1.5"><label for="paxOnInput" class="text-xs font-semibold text-slate-300">Pax on</label><input id="paxOnInput" name="paxOn" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
+        <div class="space-y-1.5"><label for="paxOffInput" class="text-xs font-semibold text-slate-300">Pax off</label><input id="paxOffInput" name="paxOff" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
+        <div class="space-y-1.5"><label for="liftsInput" class="text-xs font-semibold text-slate-300">Lifts</label><input id="liftsInput" name="lifts" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
+        <div class="space-y-1.5"><label for="startInput" class="text-xs font-semibold text-slate-300">Start</label><input id="startInput" name="start" type="time" step="1" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"></div>
+        <div class="space-y-1.5"><label for="endInput" class="text-xs font-semibold text-slate-300">End</label><input id="endInput" name="end" type="time" step="1" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"></div>
+        <div class="flex items-end sm:col-span-2 lg:col-span-4"><button type="submit" class="w-full cursor-pointer rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-950/50 transition hover:bg-sky-500 sm:w-auto">Add Activity</button></div>
+      </form>
+    </section>
+
+    <section class="hidden space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6" aria-labelledby="quickLogHeading">
       <div class="border-b border-slate-800 pb-2"><h2 id="quickLogHeading" class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-200 sm:text-sm">Quick Event Logging Panel</h2></div>
       <div class="grid grid-cols-1 gap-3">
         <div class="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-slate-800/90 bg-slate-950/90 p-3.5 transition hover:border-emerald-500/40 sm:flex-row sm:items-center"><div class="flex flex-1 flex-wrap items-center gap-2.5 font-mono text-sm sm:text-base"><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-emerald-800/60 bg-emerald-950 text-xs font-bold text-emerald-400">01</span><label for="wtg_mcc" class="font-semibold text-emerald-400">Green Light from MCC to</label><input type="text" id="wtg_mcc" oninput="handleWtgInput(this.value, 'wtg_mcc')" placeholder="WTG (e.g. A01)" class="w-40 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono uppercase text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:w-48"></div><button type="button" onclick="logWtgEvent('Green Light from MCC to ', 'wtg_mcc')" class="flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-950/50 transition hover:bg-emerald-500">Log Green Light</button></div>
@@ -79,14 +85,14 @@
     </section>
 
     <section class="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6" aria-labelledby="recordedLogHeading">
-      <div class="flex flex-wrap items-center justify-between gap-2"><div class="flex items-center gap-2.5"><h2 id="recordedLogHeading" class="text-xs font-bold uppercase tracking-wider text-slate-200 sm:text-sm">Recorded Event Log</h2><span id="logCountBadge" class="rounded-full border border-sky-500/30 bg-sky-500/20 px-2.5 py-0.5 font-mono text-xs font-bold text-sky-400">0 Entries</span><span class="hidden text-xs text-slate-400 sm:inline">Click any Time or Event cell to edit</span></div><button type="button" onclick="openClearModal()" class="cursor-pointer rounded-lg border border-rose-800/50 bg-rose-950/40 px-3 py-1.5 text-xs font-medium text-rose-400 transition hover:bg-rose-950/70 hover:text-rose-300">Clear All</button></div>
-      <div class="max-h-[440px] overflow-auto rounded-xl border border-slate-800 bg-slate-950/60"><table class="w-full border-collapse text-left"><thead class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 text-xs uppercase text-slate-400 backdrop-blur"><tr><th scope="col" class="w-32 px-4 py-3">Time</th><th scope="col" class="px-4 py-3">Event</th><th scope="col" class="w-24 px-4 py-3 text-center">Action</th></tr></thead><tbody id="logTableBody" class="divide-y divide-slate-800/70 font-mono text-xs sm:text-sm"></tbody></table></div>
+      <div class="flex flex-wrap items-center justify-between gap-2"><div class="flex items-center gap-2.5"><h2 id="recordedLogHeading" class="text-xs font-bold uppercase tracking-wider text-slate-200 sm:text-sm">Activity Log</h2><span id="logCountBadge" class="rounded-full border border-sky-500/30 bg-sky-500/20 px-2.5 py-0.5 font-mono text-xs font-bold text-sky-400">0 Entries</span></div><button type="button" onclick="openClearModal()" class="cursor-pointer rounded-lg border border-rose-800/50 bg-rose-950/40 px-3 py-1.5 text-xs font-medium text-rose-400 transition hover:bg-rose-950/70 hover:text-rose-300">Clear All</button></div>
+      <div class="max-h-[440px] overflow-auto rounded-xl border border-slate-800 bg-slate-950/60"><table class="w-full min-w-[1100px] border-collapse text-left"><thead class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 text-xs uppercase text-slate-400 backdrop-blur"><tr><th scope="col" class="px-4 py-3">Location</th><th scope="col" class="px-4 py-3">Categories</th><th scope="col" class="px-4 py-3">Activities</th><th scope="col" class="px-4 py-3">Pax on</th><th scope="col" class="px-4 py-3">Pax off</th><th scope="col" class="px-4 py-3">Lifts</th><th scope="col" class="px-4 py-3">Start</th><th scope="col" class="px-4 py-3">End</th><th scope="col" class="px-4 py-3 text-center">Action</th></tr></thead><tbody id="logTableBody" class="divide-y divide-slate-800/70 text-xs sm:text-sm"></tbody></table></div>
       <div class="flex flex-col gap-3 border-t border-slate-800 pt-3 sm:flex-row"><button type="button" onclick="exportToExcel()" class="flex flex-1 cursor-pointer items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-emerald-950/60 transition hover:from-emerald-500 hover:to-teal-500 sm:text-lg">Export to Excel (.xlsx)</button><button type="button" onclick="exportToCSV()" class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-4 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 sm:w-48">Copy for Excel</button></div>
     </section>
   </main>
 
   <div id="clearModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="clearModalTitle">
-    <div class="w-full max-w-sm space-y-4 rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl"><h3 id="clearModalTitle" class="flex items-center gap-2 text-base font-bold text-rose-400">Clear All Logged Events?</h3><p class="text-xs leading-relaxed text-slate-300 sm:text-sm">This will permanently remove all recorded events from the current table. Make sure you have exported or copied your log first.</p><div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeClearModal()" class="cursor-pointer rounded-lg bg-slate-800 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Cancel</button><button type="button" onclick="confirmClearAll()" class="cursor-pointer rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500">Confirm Clear</button></div></div>
+    <div class="w-full max-w-sm space-y-4 rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl"><h3 id="clearModalTitle" class="flex items-center gap-2 text-base font-bold text-rose-400">Clear All Activities?</h3><p class="text-xs leading-relaxed text-slate-300 sm:text-sm">This will permanently remove all recorded activities from the current table. Make sure you have exported or copied your log first.</p><div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeClearModal()" class="cursor-pointer rounded-lg bg-slate-800 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Cancel</button><button type="button" onclick="confirmClearAll()" class="cursor-pointer rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500">Confirm Clear</button></div></div>
   </div>
 
   <script>
@@ -94,26 +100,22 @@
     let logs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 
     logs = logs.map(item => {
-      if (item && typeof item.time === 'string') {
-        const match = item.time.trim().match(/^(\d{1,2}):(\d{2})/);
-        if (match) item.time = `${match[1].padStart(2, '0')}:${match[2]}`;
-      }
-      return { id: item.id || Date.now() + Math.random(), time: item.time || '00:00', event: item.event || '' };
+      const legacyTime = typeof item.time === 'string' ? item.time : '';
+      return {
+        id: item.id || Date.now() + Math.random(),
+        location: item.location || '',
+        categories: item.categories || '',
+        activity: item.activity || item.event || '',
+        paxOn: item.paxOn ?? '',
+        paxOff: item.paxOff ?? '',
+        lifts: item.lifts ?? '',
+        start: item.start || legacyTime,
+        end: item.end || ''
+      };
     });
 
-    function getTimeInMinutes(time) {
-      const match = String(time).match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-      return match ? Number(match[1]) * 60 + Number(match[2]) : null;
-    }
-
     function sortLogsByTime() {
-      logs.sort((a, b) => {
-        const aMinutes = getTimeInMinutes(a.time);
-        const bMinutes = getTimeInMinutes(b.time);
-        if (aMinutes === null) return bMinutes === null ? 0 : 1;
-        if (bMinutes === null) return -1;
-        return aMinutes - bMinutes;
-      });
+      logs.sort((a, b) => a.start.localeCompare(b.start));
     }
 
     function showToast(message, type = 'info') {
@@ -152,30 +154,34 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    const manualTimeInput = document.getElementById('manualTimeInput');
-    const clearManualTimeBtn = document.getElementById('clearManualTimeBtn');
-    manualTimeInput.addEventListener('input', function () {
-      clearManualTimeBtn.classList.toggle('hidden', this.value.trim().length === 0);
+    document.getElementById('activityForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const formData = new FormData(form);
+      const numberValue = name => {
+        const value = formData.get(name);
+        return value === '' ? '' : Number(value);
+      };
+      logs.push({
+        id: Date.now() + Math.random(),
+        location: String(formData.get('location')).trim(),
+        categories: String(formData.get('categories')).trim(),
+        activity: String(formData.get('activity')),
+        paxOn: numberValue('paxOn'),
+        paxOff: numberValue('paxOff'),
+        lifts: numberValue('lifts'),
+        start: formatActivityTime(String(formData.get('start'))),
+        end: formatActivityTime(String(formData.get('end')))
+      });
+      saveAndRender(true);
+      form.reset();
+      document.getElementById('locationInput').focus();
+      showToast('Activity added to the log.', 'success');
     });
 
-    function clearManualTime() {
-      manualTimeInput.value = '';
-      clearManualTimeBtn.classList.add('hidden');
-      showToast('Switched back to Live Clock (HH:mm)', 'info');
-    }
-
-    function resolveLogTime() {
-      const manualVal = manualTimeInput.value.trim();
-      if (manualVal) {
-        const match = manualVal.match(/^(\d{1,2}):(\d{2})$/);
-        if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) {
-          showToast('Invalid Custom Time! Use HH:mm (e.g. 08:30 or 14:45).', 'warning');
-          manualTimeInput.focus();
-          return null;
-        }
-        return `${match[1].padStart(2, '0')}:${match[2]}`;
-      }
-      return getFormattedTimeHHMM(new Date(), document.getElementById('tzSelect').value);
+    function formatActivityTime(value) {
+      const match = value.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
+      return match ? `${match[1]}:${match[2]}:${match[3] || '00'}` : value;
     }
 
     function handleWtgInput(value, sourceId) {
@@ -309,7 +315,7 @@
     }
 
     function escapeAttr(value) {
-      return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function updateInlineField(index, field, newValue) {
@@ -333,14 +339,20 @@
       const count = logs.length;
       document.getElementById('logCountBadge').textContent = `${count} ${count === 1 ? 'Entry' : 'Entries'}`;
       if (count === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="py-10 text-center font-sans text-slate-500">No events logged yet. Click any event button above to record an HH:mm timestamp.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center font-sans text-slate-500">No activities logged yet. Fill in the form above to add an activity.</td></tr>';
         return;
       }
       tbody.innerHTML = logs.map((item, idx) => `
-        <tr class="group transition hover:bg-slate-900/90">
-          <td class="w-32 px-3 py-2"><input type="text" value="${escapeAttr(item.time)}" placeholder="HH:mm" onchange="updateInlineField(${idx}, 'time', this.value)" aria-label="Edit Time (HH:mm) for row ${idx + 1}" class="w-24 rounded border border-transparent bg-transparent px-2 py-1 font-mono font-semibold text-sky-400 transition hover:border-slate-700 hover:bg-slate-900 focus:border-sky-500 focus:bg-slate-950 focus:outline-none"></td>
-          <td class="px-3 py-2"><input type="text" value="${escapeAttr(item.event)}" onchange="updateInlineField(${idx}, 'event', this.value)" aria-label="Edit Event for row ${idx + 1}" class="w-full min-w-[240px] rounded border border-transparent bg-transparent px-2 py-1 font-mono font-semibold text-white transition hover:border-slate-700 hover:bg-slate-900 focus:border-sky-500 focus:bg-slate-950 focus:outline-none"></td>
-          <td class="w-24 whitespace-nowrap px-4 py-2 text-center"><button type="button" onclick="deleteSingleLog(${idx})" class="cursor-pointer rounded-md border border-rose-800/50 bg-rose-950/50 px-2.5 py-1 text-xs text-rose-400 transition hover:bg-rose-900/60 hover:text-rose-300">Delete</button></td>
+        <tr class="transition hover:bg-slate-900/90">
+          <td class="px-4 py-2">${escapeAttr(item.location)}</td>
+          <td class="px-4 py-2">${escapeAttr(item.categories)}</td>
+          <td class="px-4 py-2">${escapeAttr(item.activity)}</td>
+          <td class="px-4 py-2">${escapeAttr(item.paxOn)}</td>
+          <td class="px-4 py-2">${escapeAttr(item.paxOff)}</td>
+          <td class="px-4 py-2">${escapeAttr(item.lifts)}</td>
+          <td class="px-4 py-2 font-mono">${escapeAttr(item.start)}</td>
+          <td class="px-4 py-2 font-mono">${escapeAttr(item.end)}</td>
+          <td class="whitespace-nowrap px-4 py-2 text-center"><button type="button" onclick="deleteSingleLog(${idx})" class="cursor-pointer rounded-md border border-rose-800/50 bg-rose-950/50 px-2.5 py-1 text-xs text-rose-400 transition hover:bg-rose-900/60 hover:text-rose-300">Delete</button></td>
         </tr>`).join('');
       if (scrollToBottom) {
         const tableWrapper = tbody.parentElement.parentElement;
@@ -351,12 +363,12 @@
     function deleteSingleLog(index) {
       const removed = logs.splice(index, 1);
       saveAndRender(false);
-      if (removed[0]) showToast(`Deleted: ${removed[0].event}`, 'info');
+      if (removed[0]) showToast(`Deleted: ${removed[0].activity}`, 'info');
     }
 
     function openClearModal() {
       if (logs.length === 0) {
-        showToast('Log table is already empty.', 'info');
+        showToast('Activity log is already empty.', 'info');
         return;
       }
       const modal = document.getElementById('clearModal');
@@ -375,7 +387,7 @@
       logs = [];
       saveAndRender(false);
       closeClearModal();
-      showToast('All logged events have been cleared.', 'info');
+      showToast('All logged activities have been cleared.', 'info');
     }
 
     function exportToExcel() {
@@ -385,12 +397,21 @@
       }
       try {
         if (!window.XLSX) throw new Error('Excel export library is unavailable');
-        const worksheet = XLSX.utils.json_to_sheet(logs.map(item => ({ Time: item.time, Event: item.event })));
-        worksheet['!cols'] = [{ wch: 12 }, { wch: 48 }];
+        const worksheet = XLSX.utils.json_to_sheet(logs.map(({ location, categories, activity, paxOn, paxOff, lifts, start, end }) => ({
+          Location: location,
+          Categories: categories,
+          Activities: activity,
+          'Pax on': paxOn,
+          'Pax off': paxOff,
+          Lifts: lifts,
+          Start: start,
+          End: end
+        })));
+        worksheet['!cols'] = [{ wch: 22 }, { wch: 22 }, { wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Event Log');
-        XLSX.writeFile(workbook, 'Vessel_Event_Log.xlsx');
-        showToast('Exported Excel file: Vessel_Event_Log.xlsx', 'success');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Activity Log');
+        XLSX.writeFile(workbook, 'Vessel_Activity_Log.xlsx');
+        showToast('Exported Excel file: Vessel_Activity_Log.xlsx', 'success');
       } catch (err) {
         console.error(err);
         showToast('Excel export failed; copying CSV instead...', 'error');
@@ -403,7 +424,10 @@
         showToast('No logged events to export!', 'warning');
         return;
       }
-      const rows = logs.map(item => [item.time, item.event].map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
+      const columns = ['Location', 'Categories', 'Activities', 'Pax on', 'Pax off', 'Lifts', 'Start', 'End'];
+      const rows = [columns, ...logs.map(item => [
+        item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts, item.start, item.end
+      ])].map(row => row.map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
       const csvContent = rows.map(row => row.join('\t')).join('\n');
 
       try {
