@@ -61,7 +61,7 @@
         <div class="space-y-1.5"><label for="liftsInput" class="text-xs font-semibold text-slate-300">Lifts</label><input id="liftsInput" name="lifts" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
         <div class="space-y-1.5"><label for="startInput" class="text-xs font-semibold text-slate-300">Start</label><input id="startInput" name="start" type="time" step="1" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"></div>
         <div class="space-y-1.5"><label for="endInput" class="text-xs font-semibold text-slate-300">End</label><div class="flex flex-wrap items-center gap-3"><input id="endInput" name="end" type="time" step="1" required class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"><label for="liveTimeToggle" class="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-medium text-slate-300"><input id="liveTimeToggle" type="checkbox" class="h-4 w-4 accent-sky-500">Live Time</label></div></div>
-        <div class="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4"><button type="submit" class="w-full cursor-pointer rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-950/50 transition hover:bg-sky-500 sm:w-auto">Add Activity</button><label for="keepCategoryToggle" class="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-300"><input id="keepCategoryToggle" type="checkbox" class="h-4 w-4 accent-sky-500">Keep previous Category</label></div>
+        <div class="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4"><button type="submit" class="w-full cursor-pointer rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-950/50 transition hover:bg-sky-500 sm:w-auto">Add Activity</button><label for="keepCategoryToggle" class="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-300"><input id="keepCategoryToggle" type="checkbox" class="h-4 w-4 accent-sky-500">Keep previous Category &amp; Location</label></div>
       </form>
     </section>
 
@@ -152,30 +152,31 @@
 
     const activitiesByCategory = {
       Operation: [
-        'Anchored', 'Bunkering', 'Connected W2W', 'Crane ops.', 'CTV in boatlanding',
-        'CTV Transfer', 'CTV/Genset', 'Daughter Craft', 'Drills onboard', 'Drone Insp./ops.',
-        'Emergency Evacuation', 'Full Ahead', 'In position crane', 'In position W2W',
-        'Maintenance - Planned', 'Other', 'Safety Zone W2W', 'Standby outside S/Z',
-        'Transit from port', 'Transit in field', 'Transit to port'
+        'Safety Zone W2W', 'Standby outside S/Z', 'Transit in field', 'Connected W2W',
+        'Crane ops.', 'CTV Transfer', 'In position crane', 'In position W2W',
+        'Transit from port', 'Transit to port', 'Drills onboard', 'Maintenance - Planned',
+        'Other', 'Anchored', 'Bunkering', 'CTV in boatlanding', 'CTV/Genset',
+        'Daughter Craft', 'Drone Insp./ops.', 'Emergency Evacuation', 'Full Ahead'
       ],
-      Weather: ['Maintenance - Planned', 'Other', 'Transit in field', 'Waiting on weather'],
+      Weather: ['Transit in field', 'Maintenance - Planned', 'Other', 'Waiting on weather'],
       Standby: [
         'Maintenance - Planned', 'Other Standby', 'Standby', 'Standby - Delay Customer',
         'Standby - Delay Vessels', 'Standby - Waiting on orders'
       ],
       Port: [
-        'Bunkering Port', 'Crane ops. Port', 'Maintenance - Planned', 'Other Port',
+        'Maintenance - Planned', 'Bunkering Port', 'Crane ops. Port', 'Other Port',
         'Port Call - Planned', 'Port Call - Unplanned'
       ],
       Reduced_hire: [
-        'Anchored', 'Bunkering', 'Connected W2W', 'Crane ops.', 'CTV in boatlanding',
-        'CTV Transfer', 'CTV/Genset', 'Daughter Craft', 'Drills onboard', 'Drone Insp./ops.',
-        'Emergency Evacuation', 'Full Ahead', 'In position crane', 'In position W2W',
-        'Maintenance - Planned', 'Other', 'Safety Zone W2W', 'Transit from port',
-        'Transit in field', 'Transit to port'
+        'Safety Zone W2W', 'Transit in field', 'Connected W2W', 'Crane ops.',
+        'CTV Transfer', 'In position crane', 'In position W2W', 'Transit from port',
+        'Transit to port', 'Drills onboard', 'Maintenance - Planned', 'Other',
+        'Anchored', 'Bunkering', 'CTV in boatlanding', 'CTV/Genset', 'Daughter Craft',
+        'Drone Insp./ops.', 'Emergency Evacuation', 'Full Ahead'
       ],
       Off_hire: ['Maintenance - Unplanned', 'Off hire', 'Other']
     };
+    const locationInput = document.getElementById('locationInput');
     const categoriesInput = document.getElementById('categoriesInput');
     const activityInput = document.getElementById('activityInput');
     const keepCategoryToggle = document.getElementById('keepCategoryToggle');
@@ -238,15 +239,19 @@
       const keepLiveTime = liveTimeToggle.checked;
       const keepCategory = keepCategoryToggle.checked;
       const previousCategory = categoriesInput.value;
+      const previousLocation = locationInput.value;
       saveAndRender(true);
       form.reset();
       liveTimeToggle.checked = keepLiveTime;
       keepCategoryToggle.checked = keepCategory;
-      if (keepCategory) categoriesInput.value = previousCategory;
+      if (keepCategory) {
+        categoriesInput.value = previousCategory;
+        locationInput.value = previousLocation;
+      }
       categoriesInput.dispatchEvent(new Event('change'));
       setStartToPreviousEnd();
       updateLiveEndTime();
-      document.getElementById('locationInput').focus();
+      locationInput.focus();
       showToast('Activity added to the log.', 'success');
     });
 
