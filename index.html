@@ -61,6 +61,7 @@
         <div class="space-y-1.5"><label for="liftsInput" class="text-xs font-semibold text-slate-300">Lifts</label><input id="liftsInput" name="lifts" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
         <div class="space-y-1.5"><label for="startInput" class="text-xs font-semibold text-slate-300">Start</label><input id="startInput" name="start" type="time" step="1" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"></div>
         <div class="space-y-1.5"><label for="endInput" class="text-xs font-semibold text-slate-300">End</label><div class="flex flex-wrap items-center gap-3"><input id="endInput" name="end" type="time" step="1" required class="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"><label for="liveTimeToggle" class="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-medium text-slate-300"><input id="liveTimeToggle" type="checkbox" class="h-4 w-4 accent-sky-500">Live Time</label></div></div>
+        <div class="space-y-1.5"><label for="teamInput" class="text-xs font-semibold text-slate-300">Comments &amp; Remarks (Team)</label><input id="teamInput" name="team" type="number" min="0" step="1" inputmode="numeric" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="Team number"></div>
         <div class="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4"><button type="submit" class="w-full cursor-pointer rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-950/50 transition hover:bg-sky-500 sm:w-auto">Add Activity</button><label for="keepCategoryToggle" class="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-300"><input id="keepCategoryToggle" type="checkbox" class="h-4 w-4 accent-sky-500">Keep previous Category &amp; Location</label></div>
       </form>
     </section>
@@ -86,7 +87,7 @@
 
     <section class="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6" aria-labelledby="recordedLogHeading">
       <div class="flex flex-wrap items-center justify-between gap-2"><div class="flex items-center gap-2.5"><h2 id="recordedLogHeading" class="text-xs font-bold uppercase tracking-wider text-slate-200 sm:text-sm">Activity Log</h2><span id="logCountBadge" class="rounded-full border border-sky-500/30 bg-sky-500/20 px-2.5 py-0.5 font-mono text-xs font-bold text-sky-400">0 Entries</span></div><button type="button" onclick="openClearModal()" class="cursor-pointer rounded-lg border border-rose-800/50 bg-rose-950/40 px-3 py-1.5 text-xs font-medium text-rose-400 transition hover:bg-rose-950/70 hover:text-rose-300">Clear All</button></div>
-      <div class="max-h-[440px] overflow-auto rounded-xl border border-slate-800 bg-slate-950/60"><table class="w-full min-w-[1100px] border-collapse text-left"><thead class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 text-xs uppercase text-slate-400 backdrop-blur"><tr><th scope="col" class="px-4 py-3">Location</th><th scope="col" class="px-4 py-3">Categories</th><th scope="col" class="px-4 py-3">Activities</th><th scope="col" class="px-4 py-3">Pax on</th><th scope="col" class="px-4 py-3">Pax off</th><th scope="col" class="px-4 py-3">Lifts</th><th scope="col" class="px-4 py-3">Start</th><th scope="col" class="px-4 py-3">End</th><th scope="col" class="px-4 py-3 text-center">Action</th></tr></thead><tbody id="logTableBody" class="divide-y divide-slate-800/70 text-xs sm:text-sm"></tbody></table></div>
+      <div class="max-h-[440px] overflow-auto rounded-xl border border-slate-800 bg-slate-950/60"><table class="w-full min-w-[1200px] border-collapse text-left"><thead class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 text-xs uppercase text-slate-400 backdrop-blur"><tr><th scope="col" class="px-4 py-3">Location</th><th scope="col" class="px-4 py-3">Categories</th><th scope="col" class="px-4 py-3">Activities</th><th scope="col" class="px-4 py-3">Pax on</th><th scope="col" class="px-4 py-3">Pax off</th><th scope="col" class="px-4 py-3">Lifts</th><th scope="col" class="px-4 py-3">Start</th><th scope="col" class="px-4 py-3">End</th><th scope="col" class="px-4 py-3">Comments &amp; Remarks</th><th scope="col" class="px-4 py-3 text-center">Action</th></tr></thead><tbody id="logTableBody" class="divide-y divide-slate-800/70 text-xs sm:text-sm"></tbody></table></div>
       <div class="flex flex-col gap-3 border-t border-slate-800 pt-3 sm:flex-row"><button type="button" onclick="exportToExcel()" class="flex flex-1 cursor-pointer items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-emerald-950/60 transition hover:from-emerald-500 hover:to-teal-500 sm:text-lg">Export to Excel (.xlsx)</button><button type="button" onclick="exportToCSV()" class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-4 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 sm:w-48">Copy for Excel</button></div>
     </section>
   </main>
@@ -110,7 +111,8 @@
         paxOff: item.paxOff ?? '',
         lifts: item.lifts ?? '',
         start: item.start || legacyTime,
-        end: item.end || ''
+        end: item.end || '',
+        team: item.team ?? ''
       };
     });
 
@@ -234,7 +236,8 @@
         paxOff: numberValue('paxOff'),
         lifts: numberValue('lifts'),
         start: formatActivityTime(String(formData.get('start'))),
-        end: formatActivityTime(String(formData.get('end')))
+        end: formatActivityTime(String(formData.get('end'))),
+        team: numberValue('team')
       });
       const keepLiveTime = liveTimeToggle.checked;
       const keepCategory = keepCategoryToggle.checked;
@@ -414,7 +417,7 @@
       const count = logs.length;
       document.getElementById('logCountBadge').textContent = `${count} ${count === 1 ? 'Entry' : 'Entries'}`;
       if (count === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center font-sans text-slate-500">No activities logged yet. Fill in the form above to add an activity.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="py-10 text-center font-sans text-slate-500">No activities logged yet. Fill in the form above to add an activity.</td></tr>';
         return;
       }
       tbody.innerHTML = logs.map((item, idx) => `
@@ -427,6 +430,7 @@
           <td class="px-4 py-2">${escapeAttr(item.lifts)}</td>
           <td class="px-4 py-2 font-mono">${escapeAttr(item.start)}</td>
           <td class="px-4 py-2 font-mono">${escapeAttr(item.end)}</td>
+          <td class="px-4 py-2">${item.team === '' ? '' : escapeAttr(`[Team ${item.team}]`)}</td>
           <td class="whitespace-nowrap px-4 py-2 text-center"><button type="button" onclick="deleteSingleLog(${idx})" class="cursor-pointer rounded-md border border-rose-800/50 bg-rose-950/50 px-2.5 py-1 text-xs text-rose-400 transition hover:bg-rose-900/60 hover:text-rose-300">Delete</button></td>
         </tr>`).join('');
       if (scrollToBottom) {
@@ -474,7 +478,7 @@
       }
       try {
         if (!window.XLSX) throw new Error('Excel export library is unavailable');
-        const worksheet = XLSX.utils.json_to_sheet(logs.map(({ location, categories, activity, paxOn, paxOff, lifts, start, end }) => ({
+        const worksheet = XLSX.utils.json_to_sheet(logs.map(({ location, categories, activity, paxOn, paxOff, lifts, start, end, team }) => ({
           Location: location,
           Categories: categories,
           Activities: activity,
@@ -482,9 +486,10 @@
           'Pax off': paxOff,
           Lifts: lifts,
           Start: start,
-          End: end
+          End: end,
+          'Comments & Remarks': team === '' ? '' : `[Team ${team}]`
         })));
-        worksheet['!cols'] = [{ wch: 22 }, { wch: 22 }, { wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+        worksheet['!cols'] = [{ wch: 22 }, { wch: 22 }, { wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 22 }];
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Activity Log');
         XLSX.writeFile(workbook, 'Vessel_Activity_Log.xlsx');
@@ -501,9 +506,10 @@
         showToast('No logged events to export!', 'warning');
         return;
       }
-      const columns = ['Location', 'Categories', 'Activities', 'Pax on', 'Pax off', 'Lifts', 'Start', 'End'];
+      const columns = ['Location', 'Categories', 'Activities', 'Pax on', 'Pax off', 'Lifts', 'Start', 'End', 'Comments & Remarks'];
       const rows = [columns, ...logs.map(item => [
-        item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts, item.start, item.end
+        item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts, item.start, item.end,
+        item.team === '' ? '' : `[Team ${item.team}]`
       ])].map(row => row.map(value => String(value).replace(/[\t\r\n]+/g, ' ')));
       const csvContent = rows.map(row => row.join('\t')).join('\n');
 
