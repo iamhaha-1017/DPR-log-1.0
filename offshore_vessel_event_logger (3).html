@@ -251,7 +251,11 @@
             <span class="text-fuchsia-400 font-semibold">Team</span>
             <input type="text" id="team_onboard" oninput="handleTeamInput(this.value, 'team_onboard')" placeholder="Team (e.g. A)" 
               class="w-28 sm:w-36 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 uppercase">
-            <span class="text-fuchsia-400 font-semibold">onboard,</span>
+            <span class="text-fuchsia-400 font-semibold">,</span>
+            <input type="number" id="team_onboard_pax" min="0" placeholder="Pax"
+              aria-label="Number of passengers onboard"
+              class="w-20 sm:w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 text-center">
+            <span class="text-fuchsia-400 font-semibold">pax onboard</span>
             <input type="number" id="team_onboard_lifts" min="0" placeholder="Lifts" 
               class="w-20 sm:w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 text-center">
             <span class="text-fuchsia-400 font-semibold">lifts</span>
@@ -568,13 +572,20 @@
     // Event 10: Team ___ onboard, ____ lifts
     function logTeamOnboardLifts() {
       const teamEl = document.getElementById('team_onboard');
+      const paxEl = document.getElementById('team_onboard_pax');
       const liftsEl = document.getElementById('team_onboard_lifts');
       const teamVal = teamEl.value.trim().toUpperCase();
+      const paxVal = paxEl.value.trim();
       const liftsVal = liftsEl.value.trim();
 
       if (!teamVal) {
         showToast('Please enter the Team!', 'warning');
         teamEl.focus();
+        return;
+      }
+      if (paxVal === '' || Number(paxVal) < 0) {
+        showToast('Please enter the number of passengers onboard!', 'warning');
+        paxEl.focus();
         return;
       }
       if (liftsVal === '' || Number(liftsVal) < 0) {
@@ -583,7 +594,7 @@
         return;
       }
 
-      addLogEntry(`Team ${teamVal} onboard, ${liftsVal} lifts`);
+      addLogEntry(`Team ${teamVal}, ${paxVal} pax onboard ${liftsVal} lifts`);
     }
 
     // Bonus Custom Event Row
