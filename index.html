@@ -88,7 +88,7 @@
     <section class="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-xl sm:p-6" aria-labelledby="recordedLogHeading">
       <div class="flex flex-wrap items-center justify-between gap-2"><div class="flex items-center gap-2.5"><h2 id="recordedLogHeading" class="text-xs font-bold uppercase tracking-wider text-slate-200 sm:text-sm">Activity Log</h2><span id="logCountBadge" class="rounded-full border border-sky-500/30 bg-sky-500/20 px-2.5 py-0.5 font-mono text-xs font-bold text-sky-400">0 Entries</span></div><button type="button" onclick="openClearModal()" class="cursor-pointer rounded-lg border border-rose-800/50 bg-rose-950/40 px-3 py-1.5 text-xs font-medium text-rose-400 transition hover:bg-rose-950/70 hover:text-rose-300">Clear All</button></div>
       <div class="max-h-[440px] overflow-auto rounded-xl border border-slate-800 bg-slate-950/60"><table class="w-full min-w-[1200px] border-collapse text-left"><thead class="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 text-xs uppercase text-slate-400 backdrop-blur"><tr><th scope="col" class="px-4 py-3">Location</th><th scope="col" class="px-4 py-3">Categories</th><th scope="col" class="px-4 py-3">Activities</th><th scope="col" class="px-4 py-3">Pax on</th><th scope="col" class="px-4 py-3">Pax off</th><th scope="col" class="px-4 py-3">Lifts</th><th scope="col" class="px-4 py-3">Start</th><th scope="col" class="px-4 py-3">End</th><th scope="col" class="px-4 py-3">Comments &amp; Remarks</th><th scope="col" class="px-4 py-3 text-center">Action</th></tr></thead><tbody id="logTableBody" class="divide-y divide-slate-800/70 text-xs sm:text-sm"></tbody></table></div>
-      <div class="flex flex-col gap-3 border-t border-slate-800 pt-3 sm:flex-row"><button type="button" onclick="exportToExcel()" class="flex flex-1 cursor-pointer items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-emerald-950/60 transition hover:from-emerald-500 hover:to-teal-500 sm:text-lg">Export to Excel (.xlsx)</button><button type="button" onclick="exportToCSV()" class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-4 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 sm:w-48">Copy to Excel</button></div>
+      <div class="flex flex-col gap-3 border-t border-slate-800 pt-3 sm:flex-row"><button type="button" onclick="exportToExcel()" class="flex flex-1 cursor-pointer items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-emerald-950/60 transition hover:from-emerald-500 hover:to-teal-500 sm:text-lg">Export to Excel (.xlsx)</button><button type="button" onclick="exportToCSV()" class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-4 text-sm font-semibold text-slate-200 transition hover:bg-slate-700 sm:w-48">Copy to Excel</button><button type="button" onclick="copyDprFormat()" class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-sky-700 bg-sky-950/70 px-4 py-4 text-sm font-semibold text-sky-200 transition hover:bg-sky-900 sm:w-48">Copy DPR Format</button></div>
     </section>
   </main>
 
@@ -525,6 +525,143 @@
         formatTimeForDisplay(item.start), formatTimeForDisplay(item.end),
         item.team === '' ? '' : `Team ${item.team}`
       ]);
+    }
+
+    function formatDprTime(value) {
+      const normalized = formatActivityTime(String(value ?? '').trim());
+      const match = normalized.match(/^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?$/);
+      if (!match || Number(match[1]) > 24 || (Number(match[1]) === 24 && match[2] !== '00')) return '';
+      return `${String(match[1]).padStart(2, '0')}:${match[2]}`;
+    }
+
+    function getDprOperationCode(activity) {
+      const normalizedActivity = String(activity ?? '').trim().toLowerCase();
+      const codeByActivity = {
+        'safety zone w2w': 'W2W',
+        'connected w2w': 'W2W',
+        'transit in field': 'TBT',
+        'transit from port': 'S2F',
+        'transit to port': 'S2P',
+        'ctv transfer': 'TS',
+        'crane ops.': 'CO',
+        'standby outside s/z': 'SSb',
+        'waiting on weather': 'WoW'
+      };
+      return codeByActivity[normalizedActivity] || '';
+    }
+
+    function getDprPassengerDetails(item) {
+      const details = [];
+      const teamValue = String(item.team ?? '').trim().replace(/^(?:team\s*)?t?/i, '');
+      const teamLabel = teamValue ? ` T${teamValue}` : '';
+      const paxOff = Number(item.paxOff);
+      const paxOn = Number(item.paxOn);
+      const lifts = Number(item.lifts);
+
+      if (Number.isFinite(paxOff) && paxOff > 0) details.push(`${paxOff} pax off${teamLabel}`);
+      if (Number.isFinite(paxOn) && paxOn > 0) details.push(`${paxOn} pax on${teamLabel}`);
+      if (Number.isFinite(lifts) && lifts > 0) {
+        const liftDirection = paxOff > 0 && paxOn <= 0 ? ' off' : paxOn > 0 && paxOff <= 0 ? ' on' : '';
+        details.push(`${lifts} ${lifts === 1 ? 'lift' : 'lifts'}${liftDirection}`);
+      }
+      return details;
+    }
+
+    function getDprDescription(item) {
+      const activity = String(item.activity ?? '').trim();
+      const normalizedActivity = activity.toLowerCase();
+      const location = String(item.location ?? '').trim();
+      const locationSuffix = location ? ` ${location}` : '';
+      let description = activity;
+
+      if (normalizedActivity === 'safety zone w2w') {
+        description = `Enter SZ${locationSuffix}`;
+      } else if (normalizedActivity === 'transit in field') {
+        description = `Transit to${locationSuffix}`;
+      } else if (normalizedActivity === 'transit from port') {
+        description = `Transit to${locationSuffix}`;
+      } else if (normalizedActivity === 'transit to port') {
+        description = `Transit to${locationSuffix || ' port'}`;
+      } else if (normalizedActivity === 'ctv transfer') {
+        description = `CTV${locationSuffix} push on`;
+      } else if (normalizedActivity === 'crane ops.') {
+        description = `Crane operation${locationSuffix}`;
+      }
+
+      const details = getDprPassengerDetails(item);
+      return [description, ...details].filter(Boolean).join(', ');
+    }
+
+    function getDprLogRows(records) {
+      const pairedClosures = new Set();
+      const rows = [];
+
+      records.forEach((item, index) => {
+        const activity = String(item.activity ?? '').trim().toLowerCase();
+        if (activity === 'connected w2w' && pairedClosures.has(index)) return;
+
+        if (activity === 'safety zone w2w') {
+          const closureIndex = records.findIndex((candidate, candidateIndex) =>
+            candidateIndex > index &&
+            !pairedClosures.has(candidateIndex) &&
+            String(candidate.activity ?? '').trim().toLowerCase() === 'connected w2w' &&
+            (!String(item.location ?? '').trim() ||
+              !String(candidate.location ?? '').trim() ||
+              String(item.location).trim().toLowerCase() === String(candidate.location).trim().toLowerCase())
+          );
+          const closure = closureIndex >= 0 ? records[closureIndex] : null;
+          if (closure) pairedClosures.add(closureIndex);
+
+          const availableValue = (value, fallback) =>
+            value !== '' && value !== null && value !== undefined ? value : fallback ?? '';
+          const combinedItem = {
+            ...item,
+            location: String(item.location ?? '').trim() || String(closure?.location ?? '').trim(),
+            paxOn: availableValue(item.paxOn, closure?.paxOn),
+            paxOff: availableValue(item.paxOff, closure?.paxOff),
+            lifts: availableValue(item.lifts, closure?.lifts),
+            team: availableValue(item.team, closure?.team)
+          };
+          rows.push([
+            formatDprTime(item.start),
+            formatDprTime(item.end || closure?.start || closure?.end),
+            getDprDescription(combinedItem),
+            'W2W'
+          ]);
+          return;
+        }
+
+        rows.push([
+          formatDprTime(item.start),
+          formatDprTime(item.end),
+          getDprDescription(item),
+          getDprOperationCode(item.activity)
+        ]);
+      });
+
+      return rows;
+    }
+
+    async function copyDprFormat() {
+      if (logs.length === 0) {
+        showToast('No logged events to convert!', 'warning');
+        return;
+      }
+
+      const plainText = getDprLogRows(logs)
+        .map(row => row.map(value => String(value).replace(/[\t\r\n]+/g, ' ')).join('\t'))
+        .join('\n');
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(plainText);
+        } else {
+          copyTextToClipboardFallback(plainText);
+        }
+        showToast('Copied DPR rows: From, To, Operations description, Ops code.', 'success');
+      } catch (error) {
+        console.error('Failed to copy DPR format to clipboard:', error);
+        showToast('Copy failed. Please check clipboard access and try again.', 'error');
+      }
     }
 
     function alignExportRows(rows) {
