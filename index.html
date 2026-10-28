@@ -298,6 +298,15 @@
       return `${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
     }
 
+    function toExcelTime(value) {
+      if (value === '' || value === null || value === undefined) return '';
+      const match = formatActivityTime(String(value).trim()).match(/^(\d{2}):([0-5]\d):([0-5]\d)$/);
+      if (!match) return value;
+      const hours = Number(match[1]);
+      if (hours > 24 || (hours === 24 && (match[2] !== '00' || match[3] !== '00'))) return value;
+      return (hours * 3600 + Number(match[2]) * 60 + Number(match[3])) / 86400;
+    }
+
     function formatTimeForDisplay(value) {
       const match = String(value ?? '').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
       if (!match) return String(value ?? '');
@@ -563,8 +572,8 @@
     }
 
     const excelColumnPositions = [0, 2, 4, 7, 9, 11, 14, 16, 18];
-    const excelColumnSpans = [2, 2, 3, 2, 2, 3, 2, 2, 4];
-    const excelColumnCount = 22;
+    const excelColumnSpans = [2, 2, 3, 2, 2, 3, 2, 2, 3];
+    const excelColumnCount = 21;
 
     function formatTeamRemarkForExport(item) {
       const remark = String(item.team ?? '').trim();
@@ -756,11 +765,18 @@
       try {
         if (!window.XLSX) throw new Error('Excel export library is unavailable');
         const rows = getExportRows().map(row =>
-          row.map((value, index) =>
-            [3, 4, 5].includes(index) && (value === '' || value === null || value === undefined) ? 0 : value
-          )
+          row.map((value, index) => {
+            if (index === 6 || index === 7) return toExcelTime(value);
+            return [3, 4, 5].includes(index) && (value === '' || value === null || value === undefined) ? 0 : value;
+          })
         );
         const worksheet = XLSX.utils.aoa_to_sheet(alignExportRows(rows));
+        rows.forEach((_, rowIndex) => {
+          const startCell = worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: excelColumnPositions[6] })];
+          const endCell = worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: excelColumnPositions[7] })];
+          if (startCell) startCell.z = '[hh]:mm';
+          if (endCell) endCell.z = 'hh:mm;@';
+        });
         worksheet['!merges'] = rows.flatMap((_, rowIndex) =>
           excelColumnSpans.map((span, index) => ({
             s: { r: rowIndex, c: excelColumnPositions[index] },
