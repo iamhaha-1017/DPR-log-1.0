@@ -59,8 +59,8 @@
         <div class="space-y-1.5"><label for="paxOnInput" class="text-xs font-semibold text-slate-300">Pax on</label><input id="paxOnInput" name="paxOn" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
         <div class="space-y-1.5"><label for="paxOffInput" class="text-xs font-semibold text-slate-300">Pax off</label><input id="paxOffInput" name="paxOff" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
         <div class="space-y-1.5"><label for="liftsInput" class="text-xs font-semibold text-slate-300">Lifts</label><input id="liftsInput" name="lifts" type="number" min="0" step="1" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="0"></div>
-        <div class="space-y-1.5"><label for="startInput" class="text-xs font-semibold text-slate-300">Start</label><input id="startInput" name="start" type="text" inputmode="text" pattern="((0?[1-9]|1[0-2]):[0-5][0-9](:[0-5][0-9])? ?(AM|PM)|([01]?\d|2[0-3]):[0-5][0-9](:[0-5][0-9])?|24:00(:00)?)" title="Enter a time such as 1:30:00 PM or 0:00:00" placeholder="AM/PM or 24-hour time" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"></div>
-        <div class="space-y-1.5"><label for="endInput" class="text-xs font-semibold text-slate-300">End</label><input id="endInput" name="end" type="text" inputmode="text" pattern="((0?[1-9]|1[0-2]):[0-5][0-9](:[0-5][0-9])? ?(AM|PM)|([01]?\d|2[0-3]):[0-5][0-9](:[0-5][0-9])?|24:00(:00)?)" title="Enter a time such as 1:30:00 PM or 0:00:00" placeholder="AM/PM or 24-hour time" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"></div>
+        <div class="space-y-1.5"><label for="startInput" class="text-xs font-semibold text-slate-300">Start</label><input id="startInput" name="start" type="text" inputmode="text" pattern="((0?[1-9]|1[0-2]):[0-5][0-9](:[0-5][0-9])? ?(AM|PM)|([01]?\d|2[0-3]):[0-5][0-9](:[0-5][0-9])?|24:00(:00)?|(([01]\d|2[0-3])[0-5]\d|2400))" title="Enter 0030, 1:30:00 PM, or 00:30:00" placeholder="0030, AM/PM, or 24-hour time" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"></div>
+        <div class="space-y-1.5"><label for="endInput" class="text-xs font-semibold text-slate-300">End</label><input id="endInput" name="end" type="text" inputmode="text" pattern="((0?[1-9]|1[0-2]):[0-5][0-9](:[0-5][0-9])? ?(AM|PM)|([01]?\d|2[0-3]):[0-5][0-9](:[0-5][0-9])?|24:00(:00)?|(([01]\d|2[0-3])[0-5]\d|2400))" title="Enter 0030, 1:30:00 PM, or 00:30:00" placeholder="0030, AM/PM, or 24-hour time" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"></div>
         <div class="space-y-1.5"><label for="teamInput" class="text-xs font-semibold text-slate-300">Comments &amp; Remarks (Team)</label><input id="teamInput" name="team" type="number" min="0" step="1" inputmode="numeric" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" placeholder="Team number"></div>
         <div class="flex flex-wrap items-center gap-4 sm:col-span-2 lg:col-span-4"><button type="submit" class="w-full cursor-pointer rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-950/50 transition hover:bg-sky-500 sm:w-auto">Add Activity</button><label for="liveTimeToggle" class="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-300"><input id="liveTimeToggle" type="checkbox" class="h-4 w-4 accent-sky-500">Live Time</label><label for="keepCategoryToggle" class="flex cursor-pointer items-center gap-2 text-xs font-medium text-slate-300"><input id="keepCategoryToggle" type="checkbox" class="h-4 w-4 accent-sky-500">Keep previous Category &amp; Location</label></div>
       </form>
@@ -216,6 +216,10 @@
       timeInput.addEventListener('input', () => {
         timeInput.value = timeInput.value.toUpperCase();
       });
+      timeInput.addEventListener('blur', () => {
+        const value = timeInput.value.trim();
+        if (value) timeInput.value = formatActivityTime(value);
+      });
     }
 
     liveTimeToggle.addEventListener('change', updateLiveEndTime);
@@ -269,6 +273,15 @@
     });
 
     function formatActivityTime(value) {
+      const compactTimeMatch = value.trim().match(/^(\d{2})(\d{2})$/);
+      if (compactTimeMatch) {
+        const hours = Number(compactTimeMatch[1]);
+        const minutes = Number(compactTimeMatch[2]);
+        if (hours < 24 && minutes < 60) return `${compactTimeMatch[1]}:${compactTimeMatch[2]}:00`;
+        if (hours === 24 && minutes === 0) return '24:00:00';
+        return value;
+      }
+
       const twelveHourMatch = value.trim().match(/^(0?[1-9]|1[0-2]):([0-5][0-9])(?::([0-5][0-9]))?\s*(AM|PM)$/i);
       if (twelveHourMatch) {
         const hour = Number(twelveHourMatch[1]) % 12 + (twelveHourMatch[4].toUpperCase() === 'PM' ? 12 : 0);
@@ -469,7 +482,7 @@
         }
         logs[index][field] = numberValue;
       } else if (field === 'start' || field === 'end') {
-        const validTime = /^(?:(?:0?[1-9]|1[0-2]):[0-5]\d(?::[0-5]\d)?\s*(?:AM|PM)|(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?|24:00(?::00)?)$/i;
+        const validTime = /^(?:(?:0?[1-9]|1[0-2]):[0-5]\d(?::[0-5]\d)?\s*(?:AM|PM)|(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?|24:00(?::00)?|(?:[01]\d|2[0-3])[0-5]\d|2400)$/i;
         if (trimmed && !validTime.test(trimmed)) {
           showToast('Enter a valid time, such as 13:30:00 or 1:30:00 PM.', 'warning');
           saveAndRender(false);
