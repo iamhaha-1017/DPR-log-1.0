@@ -786,9 +786,11 @@
       const rows = getExportRows().map(row =>
         row.map(value => String(value).replace(/[\t\r\n]+/g, ' '))
       );
-      const plainText = alignExportRows(rows).map(row => row.join('\t')).join('\n');
+      const plainText = alignExportRows(rows.map(row =>
+        row.map((value, index) => index === 6 || index === 7 ? `'${value}` : value)
+      )).map(row => row.join('\t')).join('\n');
       const htmlTable = `<table><tbody>${rows.map(row =>
-        `<tr>${row.map((value, index) => `<td colspan="${excelColumnSpans[index]}"${index === 6 || index === 7 ? ` style="mso-number-format:'hh:mm:ss'"` : ''}>${escapeAttr(value)}</td>`).join('')}</tr>`
+        `<tr>${row.map((value, index) => `<td colspan="${excelColumnSpans[index]}"${index === 6 || index === 7 ? ` style="mso-number-format:'@'"` : ''}>${escapeAttr(value)}</td>`).join('')}</tr>`
       ).join('')}</tbody></table>`;
 
       try {
