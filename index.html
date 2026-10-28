@@ -115,7 +115,8 @@
         lifts: item.lifts ?? '',
         start: item.start || legacyTime,
         end: item.end || '',
-        team: item.team ?? ''
+        team: item.team ?? '',
+        isCustomRemark: item.isCustomRemark === true
       };
     });
 
@@ -417,8 +418,36 @@
         inputEl.focus();
         return;
       }
-      addLogEntry(val);
+
+      for (const field of [locationInput, startInput, endInput]) {
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          field.focus();
+          return;
+        }
+      }
+
+      const formData = new FormData(document.getElementById('activityForm'));
+      const numberValue = name => {
+        const value = formData.get(name);
+        return value === '' ? '' : Number(value);
+      };
+      logs.push({
+        id: Date.now() + Math.random(),
+        location: String(formData.get('location')).trim(),
+        categories: String(formData.get('categories') ?? '').trim(),
+        activity: String(formData.get('activity') ?? '').trim(),
+        paxOn: numberValue('paxOn'),
+        paxOff: numberValue('paxOff'),
+        lifts: numberValue('lifts'),
+        start: formatActivityTime(String(formData.get('start'))),
+        end: formatActivityTime(String(formData.get('end'))),
+        team: val,
+        isCustomRemark: true
+      });
+      saveAndRender(true);
       inputEl.value = '';
+      showToast('Custom remark added to the activity log.', 'success');
     }
 
     function escapeAttr(value) {
@@ -477,7 +506,7 @@
           ${renderEditableCell(idx, 'lifts', item.lifts, 'number')}
           ${renderEditableCell(idx, 'start', formatTimeForDisplay(item.start))}
           ${renderEditableCell(idx, 'end', formatTimeForDisplay(item.end))}
-          ${renderEditableCell(idx, 'team', item.team, 'number')}
+          ${renderEditableCell(idx, 'team', item.team)}
           <td class="whitespace-nowrap px-4 py-2 text-center"><button type="button" onclick="deleteSingleLog(${idx})" class="cursor-pointer rounded-md border border-rose-800/50 bg-rose-950/50 px-2.5 py-1 text-xs text-rose-400 transition hover:bg-rose-900/60 hover:text-rose-300">Delete</button></td>
         </tr>`).join('');
       if (scrollToBottom) {
@@ -526,7 +555,7 @@
       return logs.map(item => [
         item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts,
         formatTimeForDisplay(item.start), formatTimeForDisplay(item.end),
-        item.team === '' ? '' : `Team ${item.team}`
+        item.team === '' ? '' : item.isCustomRemark ? String(item.team) : `Team ${item.team}`
       ]);
     }
 
@@ -555,7 +584,7 @@
 
     function getDprPassengerDetails(item) {
       const details = [];
-      const teamValue = String(item.team ?? '').trim().replace(/^(?:team\s*)?t?/i, '');
+      const teamValue = item.isCustomRemark ? '' : String(item.team ?? '').trim().replace(/^(?:team\s*)?t?/i, '');
       const teamLabel = teamValue ? ` T${teamValue}` : '';
       const paxOff = Number(item.paxOff);
       const paxOn = Number(item.paxOn);
