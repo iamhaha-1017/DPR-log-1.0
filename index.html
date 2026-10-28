@@ -564,11 +564,18 @@
     const excelColumnSpans = [2, 2, 3, 2, 2, 3, 2, 2, 4];
     const excelColumnCount = 22;
 
+    function formatTeamRemarkForExport(item) {
+      const remark = String(item.team ?? '').trim();
+      if (!remark) return '';
+      if (/^\d+$/.test(remark)) return `Team ${remark}`;
+      return item.isCustomRemark ? remark : `Team ${remark}`;
+    }
+
     function getExportRows() {
       return logs.map(item => [
         item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts,
         formatTimeForDisplay(item.start), formatTimeForDisplay(item.end),
-        item.team === '' ? '' : item.isCustomRemark ? String(item.team) : `Team ${item.team}`
+        formatTeamRemarkForExport(item)
       ]);
     }
 
