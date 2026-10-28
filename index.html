@@ -576,7 +576,7 @@
     function getExportRows() {
       return logs.map(item => [
         item.location, item.categories, item.activity, item.paxOn, item.paxOff, item.lifts,
-        formatTimeForDisplay(item.start), formatTimeForDisplay(item.end),
+        formatActivityTime(String(item.start ?? '').trim()), formatActivityTime(String(item.end ?? '').trim()),
         formatTeamRemarkForExport(item)
       ]);
     }
@@ -788,7 +788,7 @@
       );
       const plainText = alignExportRows(rows).map(row => row.join('\t')).join('\n');
       const htmlTable = `<table><tbody>${rows.map(row =>
-        `<tr>${row.map((value, index) => `<td colspan="${excelColumnSpans[index]}">${escapeAttr(value)}</td>`).join('')}</tr>`
+        `<tr>${row.map((value, index) => `<td colspan="${excelColumnSpans[index]}"${index === 6 || index === 7 ? ` style="mso-number-format:'hh:mm:ss'"` : ''}>${escapeAttr(value)}</td>`).join('')}</tr>`
       ).join('')}</tbody></table>`;
 
       try {
